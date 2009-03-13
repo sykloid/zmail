@@ -18,9 +18,6 @@ typeset MAILDIR=~/.mail
 typeset MAILIGNORE=${MAILDIR}/ignore
 
 zmail_count() {
-    setopt rc_expand_param
-    setopt extended_glob
-
     MAILBOXES=
     MAILCOUNTER=
 
@@ -41,7 +38,7 @@ zmail_count() {
             ((++box_count))
             ((++total_count))
         done
-        if (( box_count != 0 )); then
+        if (( box_count > 0 )); then
             mailboxes=($mailboxes $i:t)
             mailcount=($mailcount $box_count)
         fi
@@ -49,4 +46,10 @@ zmail_count() {
 
     export MAILBOXES
     export MAILCOUNTER
+}
+
+zmail_display() {
+    for i in {1..${#mailboxes}}; do
+        print $mailboxes[$i] $mailcount[$i]
+    done
 }
