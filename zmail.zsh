@@ -5,11 +5,10 @@
 #   - A counting function.
 #   - A display function.
 #   - Allow ignoring of mailboxes
-
 # Declare arrays to hold the names of mailboxes with new mail, and the
 # corresponding count of new mail.
 typeset -TU MAILBOXES mailboxes
-typeset -TU MAILCOUNTS mailcounts
+typeset -T MAILCOUNTS mailcounts
 integer MAILTOTAL
 
 export MAILBOXES
@@ -23,10 +22,11 @@ zmail_count() {
     MAILBOXES=
     MAILCOUNTS=
 
-    typeset -U boxes
-    typeset -U ignore
+    typeset -U all_mailboxes ignored_maildoxes
+    integer box_count
 
-    integer box_count total_count
+    box_count=0
+    MAILTOTAL=0
 
     all_mailboxes=($MAILDIR/**/*~*(new|cur|tmp)*(/N))
     ignored_mailboxes=($(cat $MAILIGNORE))
@@ -38,7 +38,7 @@ zmail_count() {
 
         for mail in ${i}/new/*(.N); do
             ((++box_count))
-            ((++total_count))
+            ((++MAILTOTAL))
         done
         if (( box_count > 0 )); then
             mailboxes=($mailboxes $i:t)
@@ -48,11 +48,13 @@ zmail_count() {
 
     export MAILBOXES
     export MAILCOUNTS
-    export MAILTOTAL=$total_count
+    export MAILTOTAL
 }
 
 zmail_display() {
-    if (( MAILTOTAL == 0 )); return
+    if (( ${#MAILCOUNTS} == 0 )); then
+        return
+    fi
     mail_header_color=$bold_color$fg256[15]
 
     mailbox_name_color=$bold_color$fg256[214]
