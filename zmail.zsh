@@ -1,4 +1,6 @@
 #! /usr/bin/env zsh
+# A light framework to notify of new mail in zsh.
+# P.C. Shyamshankar <sykora@lucentbeing.com>
 # Objectives:
 #   - A counting function.
 #   - A display function.
@@ -7,18 +9,44 @@
 # Declare arrays to hold the names of mailboxes with new mail, and the
 # corresponding count of new mail.
 typeset -TU MAILBOXES mailboxes
-typeset -TU MAILCOUNT mailcount
+typeset -TU MAILCOUNTER mailcount
+
+export MAILBOXES
+export MAILCOUNTER
 
 typeset MAILDIR=~/.mail
 typeset MAILIGNORE=${MAILDIR}/ignore
 
 zmail_count() {
+    setopt rc_expand_param
+    setopt extended_glob
+
+    MAILBOXES=
+    MAILCOUNTER=
+
     typeset -U boxes
     typeset -U ignore
-    boxes=($MAILDIR/**/*~*(new|cur|tmp)*(/N))
-    ignore=$(for box in $(cat ${MAILIGNORE}); print ${MAILDIR}/$box)
 
-    final_list=$(sort <(for i in $boxes; print -l $i) <(for i in $ignore; print -l $i) | uniq -u) 
-    print $final_list
+    integer box_count total_count
 
+    all_mailboxes=($MAILDIR/**/*~*(new|cur|tmp)*(/N))
+    ignored_mailboxes=($(cat $MAILIGNORE))
+
+    final_boxes=$(sort <(for i in $all_mailboxes; print -l $i) <(for i in $ignored_mailboxes; print -l "$MAILDIR/$i") | uniq -u)
+
+    for i in ${=final_boxes}; do
+        ((box_count = 0))
+
+        for mail in ${i}/new/*(.N); do
+            ((++box_count))
+            ((++total_count))
+        done
+        if (( box_count != 0 )); then
+            mailboxes=($mailboxes $i:t)
+            mailcount=($mailcount $box_count)
+        fi
+    done
+
+    export MAILBOXES
+    export MAILCOUNTER
 }
