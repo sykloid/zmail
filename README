@@ -1,0 +1,49 @@
+zmail is a simple set of 2 functions and associated environment variables to
+perform mail notification at the command line with zsh.
+
+There are 2 basic requirements to use zmail:
+    1. zsh (duh)
+    2. You must use the maildir format to store your mail. This usually consists
+       of each mailbox having a directory, with subdirectories new, tmp and cur
+       under it.
+
+If you meet these, move on.
+
+To actually use zmail, you must perform 2 steps:
+    1. Source zmail.zsh, manually if you want to test it, put it in zshrc if you
+       want it permanently.
+    2. Set up the precmd and/or the periodic function to check for mail, or do
+       it some other way (cron comes to mind).
+
+The first is obvious, so I'll focus on the second one.
+
+The zmail_count() function is meant to go through your mail directory and count
+your new mail. For large mail hierarchies, this can be slightly expensive,
+though I have not noticed any severe performance hits. This mail counting can be
+done in one of several places, depending on how often you want to count it.
+
+precmd is a zsh special function which is executed before each prompt display.
+periodic is another special function, which is executed at regular intervals.
+zmail_count can be invoked inside either of these functions (and set the PERIOD
+accordingly), to give you a pretty up-to-date mail count. Of course if you use a
+cron-based mail fetch to get mail from a remote server, the best place to call
+zmail_count would be right after the cron task. You can also use a program like
+incron to watch the home maildir (I'm working on how to set this up, indeed it's
+an application mentioned in the description of the incron package in debian).
+
+Regarding the display, since it's a cheap function you can easily put it in
+precmd and forget about it. However if you wish to avoid a mailman report each
+time a new prompt is rendered, you'll need to detect changes with something like
+this:
+
+    zmail_count
+    (( $MAILTOTAL > $LAST_MAILTOTAL )) && zmail_display
+    LAST_MAILTOTAL=$MAILTOTAL
+
+This will invoke zmail_display iff the total mail has increased since the last
+time it was displayed.
+
+zmail was written by P.C. Shyamshankar <sykora@lucentbeing.com>, and is
+currently being hosted at http://github.com/sykora/zmail/.
+
+Any suggestions on bugs or improvements are appreciated.
